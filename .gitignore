@@ -1,3 +1,5 @@
 # .gitignore
 
+.DS_Store
 .env
+ml/data/
