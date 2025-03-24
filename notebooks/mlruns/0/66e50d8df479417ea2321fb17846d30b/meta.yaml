@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/kashmithnisakya/Developer/Data_Science/Energy-Prediction-System/notebooks/mlruns/0/66e50d8df479417ea2321fb17846d30b/artifacts
+end_time: 1742850735534
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 66e50d8df479417ea2321fb17846d30b
+run_name: aged-flea-300
+run_uuid: 66e50d8df479417ea2321fb17846d30b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1742850452974
+status: 3
+tags: []
+user_id: kashmithnisakya

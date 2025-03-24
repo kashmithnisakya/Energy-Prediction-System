@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/kashmithnisakya/Developer/Data_Science/Energy-Prediction-System/scripts/mlruns/0/4fb2b22787e84f45bec8cad1e6eea90c/artifacts
+end_time: 1742849530214
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4fb2b22787e84f45bec8cad1e6eea90c
+run_name: caring-carp-224
+run_uuid: 4fb2b22787e84f45bec8cad1e6eea90c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1742848995313
+status: 3
+tags: []
+user_id: kashmithnisakya
