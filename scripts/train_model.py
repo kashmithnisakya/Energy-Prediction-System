@@ -4,10 +4,11 @@ import numpy as np
 import mlflow
 import tensorflow as tf
 import logging
+import os
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
-from tensorflow.keras.callbacks import EarlyStopping, Callback
+from tensorflow.keras.callbacks import EarlyStopping, Callback, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 from pathlib import Path
 
@@ -21,14 +22,33 @@ if len(gpus) > 0:
 else:
     logger.info("No GPU detected, using CPU")
 
-# Custom callback for MLflow logging per epoch
-class MLflowLoggingCallback(Callback):
+# Custom callback for MLflow logging per epoch and model saving
+class CustomCallback(Callback):
+    def __init__(self, model_name, save_dir="../ml/model"):
+        super().__init__()
+        self.model_name = model_name
+        self.save_dir = save_dir
+        os.makedirs(self.save_dir, exist_ok=True)
+        
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
+        # Log metrics to MLflow
         mlflow.log_metric("train_loss", logs.get('loss'), step=epoch)
         mlflow.log_metric("train_mae", logs.get('mae'), step=epoch)
         mlflow.log_metric("val_loss", logs.get('val_loss'), step=epoch)
         mlflow.log_metric("val_mae", logs.get('val_mae'), step=epoch)
+        
+        # Save model with validation error in filename
+        val_error = logs.get('val_mae', 0.0)
+        model_path = os.path.join(
+            self.save_dir, 
+            f"{self.model_name}_epoch_{epoch+1}_val_error_{val_error:.4f}.h5"
+        )
+        self.model.save(model_path)
+        logger.info(f"Saved model for epoch {epoch+1} with validation MAE {val_error:.4f}")
+        
+        # Log the model to MLflow
+        mlflow.log_artifact(model_path)
 
 def load_and_preprocess_data(csv_path, features, window_size):
     logger.info(f"Loading data from {csv_path}")
@@ -97,7 +117,7 @@ def main(args):
     y_train, y_test = y[:split_idx], y[split_idx:]
 
     logger.info(f"Training data shape: {X_train.shape}, {y_train.shape}")
-    logger.info(f"Testing data shapebeer: {X_test.shape}, {y_test.shape}")
+    logger.info(f"Testing data shape: {X_test.shape}, {y_test.shape}")
 
     # Learning rate scheduler
     lr_schedule = tf.keras.callbacks.ReduceLROnPlateau(
@@ -117,8 +137,12 @@ def main(args):
     )
     model.summary(print_fn=logger.info)
 
+    # Create model name from parameters
+    model_name = f"lstm_{args.hidden_size}_{args.num_layers}_lr{args.learning_rate}"
+    
+    # Setup callbacks
     early_stop = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-    mlflow_callback = MLflowLoggingCallback()
+    custom_callback = CustomCallback(model_name=model_name)
 
     logger.info("Starting model training")
     history = model.fit(
@@ -126,17 +150,18 @@ def main(args):
         validation_data=(X_test, y_test),
         epochs=args.epochs,
         batch_size=args.batch_size,
-        callbacks=[early_stop, lr_schedule, mlflow_callback]
+        callbacks=[early_stop, lr_schedule, custom_callback]
     )
 
     logger.info("Evaluating model")
     loss, mae = model.evaluate(X_test, y_test)
     mlflow.log_metrics({"final_loss": loss, "final_mae": mae})
 
-    model_path = Path("../ml/model/lstm_model.h5")
-    logger.info(f"Saving model to {model_path}")
-    model.save(model_path)
-    mlflow.log_artifact(str(model_path))
+    # Save final model
+    final_model_path = Path("../ml/model/{args.model_name}.h5")
+    logger.info(f"Saving final model to {final_model_path}")
+    model.save(final_model_path)
+    mlflow.log_artifact(str(final_model_path))
 
     logger.info("MLflow run completed")
     mlflow.end_run()
@@ -150,6 +175,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_layers', type=int, default=2)
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Initial learning rate')
+    parser.add_argument('--model_name', type=str, default="lstm_model", help='Base name for the model')
 
     args = parser.parse_args()
     main(args)
