@@ -3,3 +3,5 @@
 .DS_Store
 .env
 ml/data/
+notebooks/mlruns/
+notebooks/mlruns/
