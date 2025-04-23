@@ -301,3 +301,14 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     main(args)
+
+
+
+# CLI to run the script:
+# python train_energy_prophet.py \
+#     --csv_path ../ml/data/processed/china_mill_data_2025_03_04_09_30_30.csv \
+#     --test_size_days 60 \
+#     --changepoint_prior_scale 0.1 \
+#     --seasonality_prior_scale 15.0 \
+#     --country_holidays LK \
+#     --model_name energy_prophet_v1_test
