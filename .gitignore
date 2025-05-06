@@ -2,6 +2,6 @@
 
 .DS_Store
 .env
-ml/data/
+data/
 notebooks/mlruns/
 notebooks/mlruns/
